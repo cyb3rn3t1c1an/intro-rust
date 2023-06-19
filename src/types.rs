@@ -25,7 +25,10 @@ mod structs {
     #[test]
     fn basic_struct_example() {
         // Add `name` and `age` fields to this struct, of type `String` and `u32` respectively.
-        struct Person {}
+        struct Person {
+            name: String,
+            age: u32,
+        }
 
         assert_eq!(std::mem::size_of::<Person>(), 32);
     }
@@ -33,7 +36,7 @@ mod structs {
     #[test]
     fn basic_tuple_struct_example() {
         // Add `name` and `age` fields to this tuple struct, of type `String` and `u32` respectively.
-        struct Person();
+        struct Person(String, u32);
 
         assert_eq!(std::mem::size_of::<Person>(), 32);
     }
@@ -41,6 +44,7 @@ mod structs {
     #[test]
     fn struct_debug() {
         // Derive the `Debug` trait for this struct, so that it can be printed.
+        #[derive(Debug)]
         struct Person {
             name: &'static str,
             age: u32,
@@ -52,7 +56,7 @@ mod structs {
         };
 
         assert_eq!(
-            format!("{:?}", todo!("person")),
+            format!("{:?}", person),
             "Person { name: \"John Doe\", age: 42 }"
         );
     }
@@ -61,6 +65,7 @@ mod structs {
     fn struct_eq() {
         // Derive the `PartialEq` and `Eq` traits for this struct, so that it can be compared for
         // equality.
+        #[derive(Debug, PartialEq, Eq)]
         struct Person {
             name: &'static str,
             age: u32,
@@ -75,13 +80,13 @@ mod structs {
             age: 42,
         };
 
-        assert_eq!(todo!("person1"), todo!("person2"));
+        assert_eq!(person1, person2);
     }
 
     #[test]
     fn struct_clone() {
         // Derive the `Clone` trait for this struct, so that it can be cloned.
-        #[derive(Debug, PartialEq, Eq)]
+        #[derive(Debug, PartialEq, Eq, Clone)]
         struct Person {
             name: &'static str,
             age: u32,
@@ -91,7 +96,7 @@ mod structs {
             name: "John Doe",
             age: 42,
         };
-        let person2 = todo!("person1.clone()");
+        let person2 = person1.clone();
 
         assert_eq!(person1, person2);
     }
@@ -99,18 +104,21 @@ mod structs {
     #[test]
     fn struct_clone_deep() {
         // Derive the `Clone` trait for this struct, so that it can be cloned.
+        #[derive(Clone, Debug)]
         struct Person {
             address: Address,
         }
 
+        #[derive(Clone, Debug)]
         struct Address {
             street: u32,
         }
 
-        let old_person: Person = Person {
+        let mut old_person: Person = Person {
             address: Address { street: 42 },
         };
-        let new_person: Person = todo!("old_person.clone()");
+
+        let new_person: Person = old_person.clone();
 
         old_person.address.street = 0;
 
@@ -120,7 +128,7 @@ mod structs {
     #[test]
     fn struct_copy() {
         // Derive the `Copy` trait for these structs, so that they can be copied.
-        #[derive(Debug, PartialEq, Eq)]
+        #[derive(Debug, PartialEq, Eq, Copy, Clone)]
         struct Person {
             name: &'static str,
             age: u32,
@@ -130,7 +138,7 @@ mod structs {
             name: "John Doe",
             age: 42,
         };
-        let person2 = todo!("person1");
+        let person2 = person1;
 
         assert_eq!(person1, person2);
     }
@@ -155,8 +163,8 @@ mod structs {
             age: 42,
         };
 
-        // person_to_address.insert(sherlock.clone(), "221B Baker Street");
-        let gotten: Option<&&str> = todo!("person_to_address.get(&sherlock)");
+        person_to_address.insert(sherlock.clone(), "221B Baker Street");
+        let gotten: Option<&&str> = person_to_address.get(&sherlock);
 
         assert_eq!(gotten, Some(&"221B Baker Street"));
     }
@@ -164,13 +172,13 @@ mod structs {
     #[test]
     fn struct_default() {
         // Derive the `Default` trait for this struct, so that it can be created with `Default::default()`.
-        #[derive(Debug, PartialEq, Eq)]
+        #[derive(Default, Debug, PartialEq, Eq)]
         struct Person {
             name: &'static str,
             age: u32,
         }
 
-        let person: Person = todo!("Default::default()");
+        let person: Person = Default::default();
 
         assert_eq!(person, Person { name: "", age: 0 });
     }
@@ -192,9 +200,11 @@ mod structs {
         // The syntax is the same as for construction, except the field names are
         // on the left-hand side of the `=` sign, and you use `let` to create the
         // variables that are bound to the fields.
+        let Person { name: n, age: a } = person;
+        // or let Person { name, age} = person;
 
-        assert_eq!(todo!("name") as &'static str, "John Doe");
-        assert_eq!(todo!("age") as u32, 42);
+        assert_eq!(n, "John Doe");
+        assert_eq!(a, 42);
     }
 
     #[test]
@@ -212,10 +222,12 @@ mod structs {
 
         // Match on the person struct and extract out the name and age fields,
         // and put them into a tuple.
-        let (name, age) = todo!("match person ...") as (&'static str, u32);
+        let (name, age) = match person {
+            Person{name, age} => (name, age)
+        };
 
-        assert_eq!(todo!("name") as &'static str, "John Doe");
-        assert_eq!(todo!("age") as u32, 42);
+        assert_eq!(name, "John Doe");
+        assert_eq!(age, 42);
     }
 
     #[test]
@@ -232,7 +244,7 @@ mod structs {
         };
 
         match person {
-            Person { name: n, age: a } => {
+            Person { name: ref n, age: a } => {
                 println!("Name: {}", n);
                 println!("Age: {}", a);
             }
@@ -240,7 +252,7 @@ mod structs {
 
         // Try the following code, note the problem, and fix it using the `ref` keyword in the pattern
         // match (right before `n`), or by using `match &person` instead of `match person`.
-        assert_eq!(todo!("person.name") as String, "John Doe");
+        assert_eq!(person.name, "John Doe");
     }
 
     /// We can attach constructors for and methods on structs using the `impl` keyword, which must
@@ -272,25 +284,25 @@ mod structs {
         impl Person {
             // Define a constructor for Person that takes a name and uses a default age of 0.
             fn newborn(name: String) -> Person {
-                todo!("Construct a Person")
+                Person {name, age: 0 }
             }
 
             // Define a method on Person that returns the name of the person.
             // This method is a "getter" for the name field, so takes a shared reference to self.
             fn name(&self) -> &str {
-                todo!("Return the name of the person")
+                &self.name
             }
 
             // Define a method on Person that returns the age of the person.
             // This method is a "getter" for the age field, so takes a shared reference to self.
             fn age(&self) -> u32 {
-                todo!("Return the age of the person")
+                self.age
             }
 
             // Define a method on Person that increments the age of the person by 1.
             // This method is a "setter" for the age field, so takes a mutable reference to self.
             fn birthday(&mut self) {
-                todo!("Increment the age of the person by 1")
+               self.age += 1;
             }
         }
 
@@ -298,7 +310,7 @@ mod structs {
 
         person.birthday();
 
-        assert_eq!(person.name(), "John Doe");
+        assert_eq!(Person::name(&person), "John Doe");
         assert_eq!(person.age(), 1);
     }
 }
